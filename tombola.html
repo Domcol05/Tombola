@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tombola Napoletana & Montepremi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* --- CSS BASE --- */
+        :root {
+            --bg-color: #f0f2f5;
+            --primary-color: #FF6B6B; 
+            --secondary-color: #4ECDC4;
+            --accent-color: #FFE66D; 
+            --text-dark: #2d3436;
+            --text-light: #ffffff;
+            --board-bg: #ffffff;
+            --extracted-bg: var(--primary-color);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        h1 {
+            font-family: 'Fredoka One', cursive;
+            color: var(--primary-color);
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 0px var(--accent-color);
+            text-align: center;
+        }
+
+        .game-container {
+            display: flex;
+            gap: 30px;
+            max-width: 1400px;
+            width: 100%;
+            flex-wrap: wrap; 
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* --- SINISTRA: COMANDI --- */
+        .controls-section {
+            flex: 0 0 320px;
+            background: var(--board-bg);
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            text-align: center;
+            position: sticky;
+            top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #last-extracted-display {
+            width: 160px;
+            height: 160px;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Fredoka One', cursive;
+            font-size: 5.5rem;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            border: 6px solid var(--text-dark);
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        .btn-extract {
+            background-color: var(--secondary-color);
+            color: var(--text-light);
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            font-family: 'Fredoka One', cursive;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 5px 0 #3dbdb5;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .btn-extract:hover { transform: translateY(-3px); box-shadow: 0 8px 0 #3dbdb5; }
+        .btn-extract:active { transform: translateY(2px); box-shadow: 0 2px 0 #3dbdb5; }
+        .btn-extract:disabled { background-color: #ccc; box-shadow: none; cursor: not-allowed; }
+
+        #smorfia-text {
+            font-family: 'Fredoka One', cursive;
+            color: var(--primary-color);
+            font-size: 1.6rem;
+            line-height: 1.2;
+            min-height: 4rem;
+            margin-bottom: 10px;
+        }
+
+        #smorfia-text small {
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.6em;
+            color: #666;
+            display: block;
+            margin-top: 5px;
+            font-weight: normal;
+        }
+
+        /* --- STILE LISTA PREMI --- */
+        .prizes-container {
+            width: 100%;
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            border-radius: 15px;
+            padding: 15px;
+            border: 1px solid #eee;
+        }
+
+        .prize-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #ddd;
+            font-size: 0.95rem;
+        }
+        .prize-item:last-child { 
+            border-bottom: none; 
+            font-weight: bold; 
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            margin-top: 5px;
+        }
+        .prize-label { font-weight: 600; color: #555; }
+        .prize-value { font-family: 'Courier New', monospace; font-weight: bold; }
+
+        #remaining-count {
+            margin-top: 20px;
+            font-weight: 600;
+            color: #888;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+            width: 100%;
+        }
+
+        /* --- DESTRA: IL CARTELLONE --- */
+        .board-section {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            max-width: 800px;
+        }
+
+        .tombola-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 8px;
+        }
+
+        .grid-cell {
+            aspect-ratio: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f2f5;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #bbb;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .grid-cell.extracted {
+            background-color: var(--extracted-bg);
+            color: var(--text-light);
+            border-color: var(--accent-color);
+            animation: popIn 0.4s forwards;
+            box-shadow: 0 4px 10px rgba(255, 107, 107, 0.4);
+            font-size: 1.4rem;
+        }
+
+        /* --- MODAL INIZIALE (Budget) --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7); /* Sfondo scuro semitrasparente */
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 90%;
+            animation: slideDown 0.5s ease;
+        }
+
+        .modal-content h2 { color: var(--text-dark); margin-top: 0; }
+        .modal-content input {
+            padding: 15px;
+            font-size: 1.2rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            width: 80%;
+            margin: 20px 0;
+            text-align: center;
+            font-family: 'Poppins', sans-serif;
+        }
+        .modal-content input:focus { outline: none; border-color: var(--secondary-color); }
+        
+        .btn-start {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: 'Fredoka One', cursive;
+            transition: transform 0.2s;
+        }
+        .btn-start:hover { transform: scale(1.05); }
+
+        /* Animazioni */
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 230, 109, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(255, 230, 109, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 230, 109, 0); }
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @media (max-width: 900px) {
+            .controls-section { position: static; width: 100%; flex: none; order: -1; margin-bottom: 20px;}
+            .tombola-grid { gap: 4px; }
+            .grid-cell { font-size: 0.9rem; border-radius: 4px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="modal-overlay" id="money-modal">
+        <div class="modal-content">
+            <h2>Montepremi 💰</h2>
+            <p>Inserisci l'importo totale raccolto:</p>
+            <input type="number" id="input-amount" placeholder="Es. 10.00" step="0.50" min="1">
+            <br>
+            <button class="btn-start" onclick="calcolaMontepremi()">INIZIA PARTITA</button>
+        </div>
+    </div>
+
+    <h1>Tombola Napoletana</h1>
+
+    <div class="game-container">
+        
+        <div class="controls-section">
+            <div id="last-extracted-display">--</div>
+            
+            <button id="extractBtn" class="btn-extract">ESTRAI</button>
+            
+            <div id="smorfia-text"></div>
+
+            <div class="prizes-container" id="prizes-list">
+                <div class="prize-item">
+                    <span class="prize-label">Ambo</span>
+                    <span class="prize-value" id="prize-ambo">€ 0,00</span>
+                </div>
+                <div class="prize-item">
+                    <span class="prize-label">Terno</span>
+                    <span class="prize-value" id="prize-terno">€ 0,00</span>
+                </div>
+                <div class="prize-item">
+                    <span class="prize-label">Quaterna</span>
+                    <span class="prize-value" id="prize-quat">€ 0,00</span>
+                </div>
+                <div class="prize-item">
+                    <span class="prize-label">Cinquina</span>
+                    <span class="prize-value" id="prize-cinq">€ 0,00</span>
+                </div>
+                <div class="prize-item">
+                    <span class="prize-label">TOMBOLA</span>
+                    <span class="prize-value" id="prize-tomb">€ 0,00</span>
+                </div>
+            </div>
+            
+            <div id="remaining-count">Numeri: 90</div>
+        </div>
+
+        <div class="board-section">
+            <div class="tombola-grid" id="grid-container"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- CONFIGURAZIONE PERCENTUALI (Totale deve fare < 100 per sicurezza, ma qui gestiamo il resto) ---
+        // Esempio: Ambo 8%, Terno 12%, Quaterna 20%, Cinquina 25% (Totale 65%)
+        // La Tombola prenderà il rimanente (35%) + tutti gli arrotondamenti
+        const PERC_AMBO = 0.13;
+        const PERC_TERNO = 0.16;
+        const PERC_QUATERNA = 0.18;
+        const PERC_CINQUINA = 0.20;
+
+        // --- DATI SMORFIA ---
+        const SMORFIA = [
+            "", "L'Italia", "'A criatura (il bimbo)", "'A jatta (il gatto)", "'O puorco (il maiale)", "'A mano (la mano)", 
+            "Chella che guarda 'nterra", "'A scuppetta (il fucile)", "'A maronna (la madonna)", "'A figliata (la prole)", "'E fasule (i fagioli)", 
+            "'E surice (i topi)", "'E surdate (i soldati)", "Sant' Antonio", "'O mbriaco (l'ubriaco)", "'O guaglione (il ragazzo)", 
+            "'O culo (il deretano)", "'A disgrazia (la disgrazia)", "'O sanghe (il sangue)", "'A resata (la risata)", "'A festa (la festa)", 
+            "'A femmena annura (la donna nuda)", "'O pazzo (il pazzo)", "'O scemo (lo scemo)", "'E gguardie (le guardie)", "Natale", 
+            "Nanninella (Anna)", "'O cantero (il vaso da notte)", "'E zzizze (il seno)", "'O pate d''e criature", "'E palle d'o tenente", 
+            "'O padrone 'e casa", "'O capitone (il capitone)", "Ll'anne 'e Cristo", "'A capa (la testa)", "L'aucielluzzo (l'uccellino)", 
+            "'E castagnelle (i petardi)", "'O monaco (il frate)", "'E mmazzate (le botte)", "'A funa 'nganna (la corda al collo)", "'A paposcia (ernia)", 
+            "'O curtiello (il coltello)", "'O ccafè (il caffè)", "'A femmena 'ncopp' o balcone", "'E ccancelle (il carcere)", "'O vino (il vino)", 
+            "'E denare (i denari)", "'O muorto (il morto)", "'O muorto che parla", "'O piezzo 'e carne", "'O ppane (il pane)", 
+            "'O ciardino (il giardino)", "'A mamma (la mamma)", "'O viecchio (il vecchio)", "'O cappiello (il cappello)", "'A museca (la musica)", 
+            "'A caruta (la caduta)", "'O scartellato (il gobbo)", "'O paccotto (l'imbroglio)", "'E pile (i peli)", "Se lamenta (si lamenta)", 
+            "'O cacciatore (il cacciatore)", "'O muorto acciso", "'A sposa (la sposa)", "'A sciammeria (la marsina)", "'O chianto (il pianto)", 
+            "'E ddoie zetelle (le due zitelle)", "'O totano int'a chitarra", "'A zuppa cotta (la zuppa cotta)", "Sott'e 'ncoppo (sottosopra)", "'O palazzo (il palazzo)", 
+            "L'ommo 'e merda", "'A meraviglia (la meraviglia)", "'O spitale (l'ospedale)", "'A rotta (la grotta)", "Pullecenella (Pulcinella)", 
+            "'A funtana (la fontana)", "'E diavule (i diavoli)", "'A bella figliola", "'O mariuolo (il ladro)", "'A vocca (la bocca)", 
+            "'E sciure (i fiori)", "'A tavula 'mbandita", "'O maletiempo (il maltempo)", "'A cchiesa (la chiesa)", "Ll'aneme 'o priatorio", 
+            "'A puteca (il negozio)", "'E perucchie (i pidocchi)", "'E casecavalle (i caciocavalli)", "'A vecchia (la vecchia)", "'A paura (la paura)"
+        ];
+
+        // --- STATO DEL GIOCO ---
+        const MAX_NUM = 90;
+        let sacchettoNumeri = [];
+        let numRimasti = MAX_NUM;
+
+        const gridContainer = document.getElementById('grid-container');
+        const extractBtn = document.getElementById('extractBtn');
+        const lastExtractedDisplay = document.getElementById('last-extracted-display');
+        const remainingCountDisplay = document.getElementById('remaining-count');
+        const smorfiaTextDisplay = document.getElementById('smorfia-text');
+        const modal = document.getElementById('money-modal');
+
+        // --- LOGICA MONTEPREMI ---
+        function arrotondaDifetto05(valore) {
+            // Moltiplico per 2, prendo la parte intera (floor), divido per 2
+            // Es: 1.67 -> 3.34 -> 3.0 -> 1.5
+            return Math.floor(valore * 2) / 2;
+        }
+
+        function formattaEuro(valore) {
+            return "€ " + valore.toFixed(2).replace('.', ',');
+        }
+
+        function calcolaMontepremi() {
+            const input = document.getElementById('input-amount');
+            const totale = parseFloat(input.value);
+
+            if (isNaN(totale) || totale <= 0) {
+                alert("Inserisci un importo valido!");
+                return;
+            }
+
+            // 1. Calcolo premi minori e arrotondo per difetto
+            const ambo = arrotondaDifetto05(totale * PERC_AMBO);
+            const terno = arrotondaDifetto05(totale * PERC_TERNO);
+            const quaterna = arrotondaDifetto05(totale * PERC_QUATERNA);
+            const cinquina = arrotondaDifetto05(totale * PERC_CINQUINA);
+
+            // 2. Sommo i premi distribuiti
+            const parzialeDistribuito = ambo + terno + quaterna + cinquina;
+
+            // 3. La Tombola prende TUTTO il resto (percentuale rimanente + resti degli arrotondamenti)
+            const tombola = totale - parzialeDistribuito;
+
+            // 4. Visualizzo a schermo
+            document.getElementById('prize-ambo').innerText = formattaEuro(ambo);
+            document.getElementById('prize-terno').innerText = formattaEuro(terno);
+            document.getElementById('prize-quat').innerText = formattaEuro(quaterna);
+            document.getElementById('prize-cinq').innerText = formattaEuro(cinquina);
+            document.getElementById('prize-tomb').innerText = formattaEuro(tombola);
+
+            // 5. Chiudo il modal e avvio il gioco
+            modal.style.display = 'none';
+        }
+
+
+        // --- LOGICA GIOCO ---
+        function initGame() {
+            for (let i = 1; i <= MAX_NUM; i++) sacchettoNumeri.push(i);
+
+            for (let i = 1; i <= MAX_NUM; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('grid-cell');
+                const numSpan = document.createElement('span');
+                numSpan.innerText = i;
+                cell.appendChild(numSpan);
+                cell.id = `cell-${i}`; 
+                gridContainer.appendChild(cell);
+            }
+            updateUIState();
+        }
+
+        function estrazione() {
+            if (numRimasti === 0) { gameOver(); return; }
+
+            const indiceRandom = Math.floor(Math.random() * numRimasti);
+            const numeroEstratto = sacchettoNumeri[indiceRandom];
+
+            const ultimoIndiceValido = numRimasti - 1;
+            [sacchettoNumeri[indiceRandom], sacchettoNumeri[ultimoIndiceValido]] = 
+            [sacchettoNumeri[ultimoIndiceValido], sacchettoNumeri[indiceRandom]];
+
+            numRimasti--;
+            updateUI(numeroEstratto);
+        }
+
+        function updateUI(numero) {
+            lastExtractedDisplay.innerText = numero;
+            lastExtractedDisplay.style.animation = 'none';
+            setTimeout(() => lastExtractedDisplay.style.animation = '', 10);
+            
+            let testoSmorfia = SMORFIA[numero];
+            testoSmorfia = testoSmorfia.replace(/\((.*?)\)/g, '<small>($1)</small>');
+            smorfiaTextDisplay.innerHTML = testoSmorfia;
+
+            const cella = document.getElementById(`cell-${numero}`);
+            if (cella) {
+                cella.classList.add('extracted');
+            }
+
+            updateUIState();
+            if (numRimasti === 0) gameOver();
+        }
+
+        function updateUIState() {
+            remainingCountDisplay.innerText = `Numeri nel sacchetto: ${numRimasti}`;
+        }
+
+        function gameOver() {
+            extractBtn.innerText = "FINE";
+            extractBtn.disabled = true;
+            extractBtn.style.backgroundColor = "#ccc";
+            smorfiaTextDisplay.innerHTML = "TOMBOLA!";
+        }
+
+        extractBtn.addEventListener('click', estrazione);
+        initGame();
+
+        // Permetti l'invio col tasto ENTER nel modal
+        document.getElementById("input-amount").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                calcolaMontepremi();
+            }
+        });
+
+    </script>
+</body>
+</html>
